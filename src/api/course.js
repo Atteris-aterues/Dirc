@@ -29,10 +29,6 @@ export const courseAPI = {
     return api.post(`/courses/${courseId}/favorite`)
   },
 
-  // 获取课程评价
-  getCourseReviews(courseId, params = {}) {
-    return api.get(`/courses/${courseId}/reviews`, { params })
-  },
 
   getCourseComments(courseId, params = {}, config = {}) {
     const cfg = { params, ...(config || {}) }
@@ -46,10 +42,7 @@ export const courseAPI = {
     })
   },
 
-  // 提交课程评价
-  submitReview(courseId, reviewData) {
-    return api.post(`/courses/${courseId}/reviews`, reviewData)
-  },
+
 
   // 提交课程评论（支持 FormData 或 Node form-data）
   // 示例后端路径: POST /course_comments/ (

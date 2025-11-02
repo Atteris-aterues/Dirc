@@ -58,10 +58,7 @@ export const resourceAPI = {
     })
   },
 
-  // 提交资源评价
-  submitReview(resourceId, reviewData) {
-    return api.post(`/resources/${resourceId}/reviews`, reviewData)
-  },
+
 
   // 提交资源评论（兼容后端 /resource_comments/ 路径）
   // commentData 可以是浏览器的 FormData 或 node 的 form-data 实例
