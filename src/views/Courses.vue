@@ -172,14 +172,13 @@
             <div class="mb-4">
               <label class="block text-gray-700 mb-2">评分</label>
               <div class="star-rating flex space-x-1">
-                <span 
-                  v-for="star in 5" 
+                <span
+                  v-for="star in 5"
                   :key="star"
-                  class="iconify star text-2xl"
-                  :class="{ active: star <= userRating.rating }"
-                  data-icon="mdi:star"
+                  class="star-char text-2xl"
+                  :class="star <= userRating.rating ? 'active' : 'inactive'"
                   @click="setRating(star)"
-                ></span>
+                >{{ star <= userRating.rating ? '★' : '☆' }}</span>
               </div>
             </div>
             <div class="mb-4">

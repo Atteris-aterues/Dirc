@@ -7,6 +7,7 @@ import Resources from '../views/Resources.vue'
 import Profile from '../views/Profile.vue'
 import Admin from '../views/Admin.vue'
 import Login from '../views/Login.vue'
+import ResourceDetail from '../views/ResourceDetail.vue'
 import store from '../store'
 
 Vue.use(VueRouter)
@@ -38,6 +39,11 @@ const routes = [
     path: '/resources',
     name: 'Resources',
     component: Resources
+  },
+  {
+    path: '/resource',
+    name: 'ResourceDetail',
+    component: ResourceDetail
   },
   {
     path: '/profile',

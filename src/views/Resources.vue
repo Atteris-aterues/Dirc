@@ -58,6 +58,7 @@
           v-for="resource in hotResources" 
           :key="resource.id"
           :resource="resource"
+          @view-details="viewResourceDetail"
         />
       </div>
     </div>
@@ -102,6 +103,10 @@
             <span>{{ resource.rating }}</span>
           </div>
         </div>
+        <button 
+          class="btn-secondary w-full mt-3 text-sm"
+          @click="viewResourceDetail(resource)"
+        >查看详情</button>
       </div>
     </div>
   </div>
@@ -180,6 +185,10 @@ export default {
         powerpoint: 'mdi:file-powerpoint'
       }
       return icons[type] || 'mdi:file'
+    },
+    viewResourceDetail(resource) {
+      this.$store.commit('SET_SELECTED_RESOURCE', resource)
+      this.$router.push('/resource')
     }
   }
 }

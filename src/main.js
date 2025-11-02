@@ -5,6 +5,7 @@ import store from './store'
 import './style.css'
 
 Vue.config.productionTip = false
+Vue.config.ignoredElements = ['iconify-icon']
 
 // 初始化认证状态
 store.dispatch('initAuth')

@@ -19,6 +19,9 @@ export default new Vuex.Store({
       name: '张明同学',
       college: '计算机学院',
       grade: '2022级',
+      role: 'user',
+      email: 'zhangsan@example.com',
+      phone: '13800138000',
       creditScore: 86,
       contributions: 32,
       favorites: {
@@ -166,6 +169,20 @@ export default new Vuex.Store({
       rating: 0,
       comment: ''
     },
+    // 资源详情与评价
+    selectedResource: null,
+    resourceUserRating: {
+      rating: 0,
+      comment: ''
+    },
+    resourceComments: [
+      { id: 101, author: '张同学', rating: 4, date: '2023-12-12', content: '资料很实用，讲义排版清晰。' },
+      { id: 102, author: '王同学', rating: 5, date: '2023-12-08', content: '包含习题答案，复习很方便！' },
+      { id: 103, author: ' 陈同学 ', rating: 4, date: '2023-12-18', content: ' 例题解析很详细，步骤不跳步，基础弱的也能跟上。' },
+      { id: 104, author: ' 杨同学 ', rating: 5, date: '2023-12-01', content: ' 知识点覆盖得很全，期末复习靠这份资料提了不少分！' },
+      { id: 105, author: ' 赵同学 ', rating: 4, date: '2023-12-15', content: ' 讲解比课本通俗，配合视频课学，难点一下就懂了。' },
+      { id: 106, author: ' 刘同学 ', rating: 5, date: '2023-12-05', content: ' 能直接打印，纸质版复习做笔记超方便，省了自己整理的时间。' }
+    ],
     
     // 待审核资源
     pendingResources: [
@@ -268,8 +285,35 @@ export default new Vuex.Store({
     },
     
     SET_USER_RATING(state, { rating, comment }) {
-      state.userRating.rating = rating
-      state.userRating.comment = comment
+        // 使用 Vue.set 保证响应式更新
+        Vue.set(state.userRating, 'rating', rating)
+        Vue.set(state.userRating, 'comment', comment)
+    },
+    // 资源相关
+    SET_SELECTED_RESOURCE(state, resource) {
+      state.selectedResource = resource
+    },
+    SET_RESOURCE_USER_RATING(state, { rating, comment }) {
+      Vue.set(state.resourceUserRating, 'rating', rating)
+      Vue.set(state.resourceUserRating, 'comment', comment)
+    },
+    ADD_RESOURCE_COMMENT(state, comment) {
+      state.resourceComments.unshift(comment)
+    },
+    INCREMENT_RESOURCE_DOWNLOADS(state, resourceId) {
+      // 更新 resources 列表
+      const idx = state.resources.findIndex(r => r.id === resourceId)
+      if (idx !== -1) {
+          const updated = { ...state.resources[idx], downloads: (state.resources[idx].downloads || 0) + 1 }
+          state.resources.splice(idx, 1, updated)
+      }
+      // 更新已选中的资源
+      if (state.selectedResource && state.selectedResource.id === resourceId) {
+          state.selectedResource = {
+              ...state.selectedResource,
+              downloads: (state.selectedResource.downloads || 0) + 1
+          }
+      }
     },
     
     ADD_COMMENT(state, comment) {

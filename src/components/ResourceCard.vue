@@ -20,6 +20,10 @@
           <span>{{ resource.downloads }}次下载</span>
         </div>
       </div>
+      <button 
+        class="btn-secondary w-full mt-3 text-sm"
+        @click="$emit('view-details', resource)"
+      >查看详情</button>
     </div>
   </div>
 </template>

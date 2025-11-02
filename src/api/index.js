@@ -57,4 +57,5 @@ export { uploadAPI } from './upload'
 export { notificationAPI } from './notification'
 export { searchAPI } from './search'
 export { statsAPI } from './stats'
+export { commentAPI } from './comment'
 
