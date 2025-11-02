@@ -117,29 +117,35 @@
   color: white;
 }
 
-/* 评分星星外层按钮样式，确保可点击 */
-.star-rating button {
-  background: transparent;
-  border: none;
-  padding: 0;
-  line-height: 1;
-  cursor: pointer;
-}
-.star-rating button:focus {
-  outline: none;
+/* 隐藏滚动条但保持滚动功能 */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
-/* 纯文本星形样式，保证点击后即时高亮 */
-.star-rating .star-char {
-  cursor: pointer;
-}
-.star-rating .star-char.active {
-  color: #FFC107; /* 高亮色 */
-}
-.star-rating .star-char.inactive {
-  color: #E5E7EB; /* 灰色 */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }
 
+/* 平滑滚动 */
+.scrollbar-hide {
+  scroll-behavior: smooth;
+}
+
+/* 无限滚动动画 */
+.infinite-scroll {
+  animation: scroll-horizontal linear infinite;
+  will-change: transform;
+}
+
+@keyframes scroll-horizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
 
 
 

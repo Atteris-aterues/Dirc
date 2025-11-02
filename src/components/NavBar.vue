@@ -110,6 +110,7 @@ export default {
       showUserMenu: false,
       navItems: [
         { name: 'Home', path: '/', label: '首页' },
+        { name: 'Courses', path: '/courses', label: '全部课程' },
         { name: 'MyCourses', path: '/my-courses', label: '我的选课' },
         { name: 'Resources', path: '/resources', label: '资源广场' },
         { name: 'Profile', path: '/profile', label: '个人中心' },

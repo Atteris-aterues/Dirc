@@ -1,6 +1,79 @@
 <template>
   <div class="px-8 py-6">
-    <div class="grid grid-cols-3 gap-8">
+    <!-- 如果没有选中课程，显示课程列表 -->
+    <template v-if="!selectedCourse">
+      <h1 class="text-3xl font-bold mb-6">全部课程</h1>
+      
+      <!-- 课程筛选 -->
+      <div class="bg-white card p-5 mb-8">
+        <h2 class="text-xl font-bold mb-4">课程筛选</h2>
+        <div class="grid grid-cols-5 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">学院</label>
+            <select 
+              class="w-full border border-gray-300 rounded-md py-2 px-3"
+              v-model="filters.college"
+              @change="updateFilter('college', filters.college)"
+            >
+              <option>全部学院</option>
+              <option>计算机学院</option>
+              <option>经济学院</option>
+              <option>医学院</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">学分</label>
+            <select 
+              class="w-full border border-gray-300 rounded-md py-2 px-3"
+              v-model="filters.credits"
+              @change="updateFilter('credits', filters.credits)"
+            >
+              <option>不限学分</option>
+              <option>1学分</option>
+              <option>2学分</option>
+              <option>3学分</option>
+              <option>4学分</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">评分</label>
+            <select 
+              class="w-full border border-gray-300 rounded-md py-2 px-3"
+              v-model="filters.rating"
+              @change="updateFilter('rating', filters.rating)"
+            >
+              <option>全部评分</option>
+              <option>4分以上</option>
+              <option>3分以上</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 课程列表 -->
+      <div class="custom-grid">
+        <CourseCard 
+          v-for="course in filteredCourses" 
+          :key="course.id"
+          :course="course"
+          @view-details="viewCourseDetails"
+        />
+      </div>
+    </template>
+
+    <!-- 如果选中了课程，显示课程详情 -->
+    <template v-else>
+      <div class="mb-4">
+        <button 
+          @click="backToCourseList"
+          class="btn-secondary flex items-center mb-4"
+        >
+          <span class="iconify mr-2" data-icon="mdi:arrow-left"></span>
+          返回课程列表
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-3 gap-8">
       <!-- 左侧课程信息 -->
                 <div class="col-span-1">
                     <div class="card p-6">
@@ -151,7 +224,8 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </template>
 
     <!-- 教师详情浮窗 -->
     <div v-if="showTeacherDetail" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -235,20 +309,31 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapActions, mapGetters } from 'vuex'
+import CourseCard from '../components/CourseCard.vue'
 
 export default {
   name: 'Courses',
+  components: {
+    CourseCard
+  },
   data() {
     return {
       showTeacherDetail: false
     }
   },
   computed: {
-    ...mapState(['selectedCourse', 'comments', 'userRating'])
+    ...mapState(['selectedCourse', 'comments', 'userRating', 'filters', 'courses']),
+    ...mapGetters(['filteredCourses'])
   },
   methods: {
-    ...mapActions(['submitRating']),
+    ...mapActions(['submitRating', 'updateFilter', 'selectCourse']),
+    viewCourseDetails(course) {
+      this.selectCourse(course)
+    },
+    backToCourseList() {
+      this.$store.commit('SET_SELECTED_COURSE', null)
+    },
     setRating(rating) {
       this.$store.commit('SET_USER_RATING', { 
         rating, 
@@ -343,19 +428,18 @@ export default {
   },
   async created() {
     try {
-      // 加载课程列表
+      // 加载课程列表（已经包含本地数据兜底）
       await this.$store.dispatch('fetchCourses')
-      
-      // 如果没有选中的课程，默认选择第一个
-      if (!this.selectedCourse && this.$store.state.courses.length > 0) {
-        this.$store.commit('SET_SELECTED_COURSE', this.$store.state.courses[0])
-      }
     } catch (error) {
       console.error('加载课程失败:', error)
-      this.$store.commit('SET_ERROR', {
-        title: '加载失败',
-        message: '无法加载课程列表，请稍后重试'
-      })
+      // 即使出错，也尝试使用state中已有的数据
+      // 如果仍然没有数据，才显示错误
+      if (!this.$store.state.courses || this.$store.state.courses.length === 0) {
+        this.$store.commit('SET_ERROR', {
+          title: '加载失败',
+          message: '无法加载课程列表，请稍后重试'
+        })
+      }
     }
   }
 }
