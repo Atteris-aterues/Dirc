@@ -142,11 +142,19 @@ export default {
     updateSearch() {
       this.updateSearchKeyword(this.searchKeyword)
     },
-    handleLogout() {
-      this.logout()
+  async handleLogout() {
+    try {
+      await this.logout()
+      // 显示登出成功消息
+      this.$root.$emit('message', '您已成功退出登录', 'success')
+    } catch (error) {
+      // 登出过程中发生错误
+      this.$root.$emit('message', '登出时发生错误，请重试', 'error')
+    } finally {
+      // 关闭用户菜单
       this.showUserMenu = false
-      this.$router.push('/')
-    },
+    }
+  },
     handleLogoError(event) {
       // Logo 加载失败时显示占位符
       event.target.style.display = 'none'

@@ -13,6 +13,7 @@
         <p class="mt-2 text-sm text-gray-600">请登录您的账户</p>
       </div>
 
+      
       <!-- 登录表单 -->
       <div class="bg-white card p-8">
         <form @submit.prevent="handleLogin" class="space-y-6">
@@ -145,6 +146,7 @@
           </button>
         </div>
 
+
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
@@ -156,17 +158,6 @@
               placeholder="请输入用户名"
             />
           </div>
-
-          <!-- <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">学号/工号</label>
-            <input
-              v-model="registerForm.studentId"
-              type="text"
-              required
-              class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="请输入学号或工号"
-            />
-          </div> -->
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
@@ -187,6 +178,7 @@
               required
               class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="请输入密码"
+              @focus="clearErrorMessage"
             />
           </div>
 
@@ -198,20 +190,17 @@
               required
               class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="请再次输入密码"
+              @focus="clearErrorMessage"
             />
           </div>
 
-          <!-- <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">用户类型</label>
-            <select
-              v-model="registerForm.userType"
-              class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="student">学生</option>
-              <option value="teacher">教师</option>
-              <option value="admin">管理员</option>
-            </select>
-          </div> -->
+          <!-- 注册错误信息 -->
+         <div v-if="errorMessage" class="bg-red-50 border border-red-200 rounded-md p-4"> 
+          <div class="flex">
+            <span class="iconify text-red-400 mr-2" data-icon="mdi:alert-circle"></span>
+            <span class="text-sm text-red-700">{{ errorMessage }}</span>
+          </div>
+        </div>
 
           <div class="flex space-x-4 pt-4">
             <button
@@ -252,76 +241,94 @@ export default {
       },
       registerForm: {
         username: '',
-        studentId: '',/////////////////////////////
         email: '',
         password: '',
-        confirmPassword: '',
-        userType: 'student'
+        confirmPassword: ''
       }
     }
   },
 
   methods: {
-  ...mapActions(['login']),
-  async handleLogin() {
-    try {
-      // 显示加载状态
-      this.loading = true;
-      
-      // 调用 Vuex 中的 login action
-      const user = await this.login({
-        email: this.loginForm.email,
-        password: this.loginForm.password
-      });
-      
-      // 登录成功后的处理
-      if (this.$message) {
-        this.$message.success('登录成功');
-      } else {
-        console.log('登录成功');
+    ...mapActions(['login','register']),
+
+    clearErrorMessage() {
+      this.errorMessage = '';
+    },
+    async handleLogin() {
+      try {
+        // 显示加载状态
+        this.isLoading = true;
+        this.errorMessage = '';
+        
+        // 调用 Vuex 中的 login action
+        const user = await this.login({
+          email: this.loginForm.email,
+          password: this.loginForm.password
+        });
+        
+        // 登录成功后的处理
+        this.$root.$emit('message', '登录成功', 'success');
+
+        // 确保登录状态已保存后再跳转
+        await this.$nextTick();
+        
+        // 根据用户角色跳转到相应页面
+        if (user && user.role === 'admin') {
+          this.$router.push('/admin');
+        } else {
+          this.$router.push('/'); // 或者跳转到用户主页
+        }
+      } catch (error) {
+        // 登录失败处理
+        const errorMessage = (error && error.message) || '登录失败，请检查账号密码';
+        this.errorMessage = errorMessage;
+        this.$root.$emit('message', errorMessage, 'error');
+      } finally {
+        this.isLoading = false;
       }
-      
-      // 根据用户角色跳转到相应页面
-      if (user.role === 'admin') {
-        this.$router.push('/admin');
-      } else {
-        this.$router.push('/'); // 或者跳转到用户主页
-      }
-    } catch (error) {
-      
-      // 登录失败处理 - 安全地访问错误信息
-      const errorMessage = (error && error.message) || '登录失败，请检查账号密码';
-      if (this.$message) {
-        this.$message.error(errorMessage);
-      } else {
-        console.error('登录失败:', errorMessage);
-      }
-    } finally {
-      this.loading = false;
-    }
-  },
+    },
     
     async handleRegister() {
       if (this.registerForm.password !== this.registerForm.confirmPassword) {
-        this.errorMessage = '两次输入的密码不一致'
+        const errorMessage = '两次输入的密码不一致';
+        this.errorMessage = errorMessage;
+        this.$root.$emit('message', errorMessage, 'error');
         return
       }
       
       try {
-        await this.register(this.registerForm)
+        // 只传递需要的字段
+        const registerData = {
+          username: this.registerForm.username,
+          email: this.registerForm.email,
+          password: this.registerForm.password
+        };
+        
+        await this.register(registerData)
+        // 注册成功后关闭注册模态框并显示成功消息
         this.showRegister = false
-        this.$router.push('/')
+        this.$root.$emit('message', '注册成功', 'success');
+
+        // 清空注册表单
+        this.registerForm = {
+          username: '',
+          email: '',
+          password: '',
+          confirmPassword: ''
+        };
       } catch (error) {
-        this.errorMessage = error.message || '注册失败，请重试'
+        const errorMessage = error.message || '注册失败，请重试';
+        this.errorMessage = errorMessage;
+        this.$root.$emit('message', errorMessage, 'error');
       }
     },
     
     quickLogin(type) {
       if (type === 'student') {
-        this.loginForm.username = 'student@example.com'
-        this.loginForm.password = '123456'
+        this.loginForm.email = '2451965602@qq.com'
+        this.loginForm.password = 'lbl102300218'
       } else if (type === 'admin') {
-        this.loginForm.username = 'admin@example.com'
+        this.loginForm.email = 'admin@example.com'
         this.loginForm.password = '123456'
       }
       this.handleLogin()

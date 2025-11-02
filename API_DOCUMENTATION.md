@@ -14,7 +14,7 @@
 - **请求参数**:
   ```json
   {
-    "username": "string", // 用户名或学号
+    "email": "string", // 用户邮箱
     "password": "string"  // 密码
   }
   ```

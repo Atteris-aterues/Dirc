@@ -229,13 +229,16 @@ export default new Vuex.Store({
   
   mutations: {
     // 认证相关
-    SET_AUTH(state, { user, token }) {
-      state.isAuthenticated = true
-      state.currentUser = user
-      state.token = token
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
-    },
+  SET_AUTH(state, { user, token }) {
+  state.isAuthenticated = true
+  state.currentUser = user
+  state.token = token
+  // 只有当token存在时才保存到localStorage
+  if (token) {
+    localStorage.setItem('token', token)
+  }
+  localStorage.setItem('user', JSON.stringify(user))
+},
     
     CLEAR_AUTH(state) {
       state.isAuthenticated = false
@@ -331,68 +334,161 @@ export default new Vuex.Store({
   
   actions: {
     // 认证相关
-    async login({ commit }, credentials) {
-      try {
-        commit('SET_LOADING', { key: 'auth', value: true })
-        commit('CLEAR_ERROR')
-        const response = await authAPI.login(credentials)
-        
-        // 安全地访问响应数据
-        const baseResponse = response && response.baseResponse;
-        const userData = response && response.data && response.data.user;
-        const tokenData = response && response.data && response.data.token;
-        
-        // 根据OpenAPI文档，响应包含baseResponse和user
-        if (baseResponse && baseResponse.code === 200) {
-          const user = userData || (response.data && response.data);
-          const token = tokenData || response.token || response.access_token;
-          
-          if (user && token) {
-            commit('SET_AUTH', { user, token })
-            return user
-          } else {
-            throw new Error('响应数据不完整')
-          }
-        } else {
-          throw new Error(baseResponse?.message || '登录失败')
-        }
-      } catch (error) {
-        // 更安全的错误处理
-        const errorMessage = (error && error.message) || '登录失败'
-        commit('SET_ERROR', errorMessage)
-        throw new Error(errorMessage)
-      } finally { 
-        commit('SET_LOADING', { key: 'auth', value: false })
-      }
-    },
+async login({ commit }, credentials) {
+  try {
+    commit('SET_LOADING', { key: 'auth', value: true })
+    commit('CLEAR_ERROR')
+    const response = await authAPI.login(credentials)
     
+    console.log('API响应:', response); // 添加日志以便调试
+    
+    // 适配实际的API响应格式
+    let user, token;
+    
+    // 检查响应格式 - 根据您提供的信息进行适配
+    if (response && response.data && response.data.baseResponse) {
+      // 检查成功的状态码 (10000)
+      if (response.data.baseResponse.code === 10000) {
+        // 从响应中提取实际的用户数据
+        user = response.data.user;
+        
+        // 从响应头中获取token
+        token = response.headers['authorization'] || response.headers['x-auth-token'] || response.headers['access-token'];
+        // 如果响应头中的token包含Bearer前缀，需要去掉
+        if (token && token.startsWith('Bearer ')) {
+          token = token.substring(7);
+        }
+        
+        // 如果响应头中没有token，检查响应体中是否有
+        if (!token) {
+          token = response.data.token || response.data.access_token || response.data.data?.token;
+        }
+      } else {
+        throw new Error(response.data.baseResponse.message || '登录失败')
+      }
+    }
+    
+    // 检查是否获取到了用户信息
+    if (user) {
+      // 使用API响应中的实际用户数据
+      const actualUser = {
+        userId: user.userId || 0,
+        username: user.username || '',
+        email: user.email || '',
+        collegeId: user.collegeId || 0,
+        majorId: user.majorId || 0,
+        avatarUrl: user.avatarUrl || '',
+        reputationScore: user.reputationScore || 0,
+        roleId: user.roleId || 2,
+        role: user.roleId === 1 ? 'admin' : user.roleId === 2 ? 'user' : 'guest', // 根据roleId设置role
+        status: user.status || 'active',
+        createdAt: user.createdAt || 0,
+        updatedAt: user.updatedAt || 0
+      };
+      
+      // 即使没有token也继续，因为可能在其他地方处理认证
+      commit('SET_AUTH', { user: actualUser, token: token || '' })
+      return actualUser
+    } else {
+      console.error('响应数据不完整:', response);
+      throw new Error('登录响应数据格式不正确，缺少用户信息')
+    }
+  } catch (error) {
+    // 更详细的错误处理
+    console.error('登录错误:', error);
+    let errorMessage = '登录失败';
+    
+    if (error.response) {
+      // 服务器响应了错误状态码
+      if (error.response.status === 401) {
+        errorMessage = '用户名或密码错误';
+      } else if (error.response.status === 400) {
+        errorMessage = '请求参数错误';
+      } else if (error.response.status === 500) {
+        errorMessage = '服务器内部错误';
+      } else {
+        errorMessage = `登录失败 (${error.response.status})`;
+      }
+    } else if (error.request) {
+      // 请求已发出但没有收到响应
+      errorMessage = '网络连接失败，请检查网络设置';
+    } else if (error.message) {
+      // 其他错误信息
+      errorMessage = error.message;
+    }
+    
+    commit('SET_ERROR', errorMessage)
+    throw new Error(errorMessage)
+  } finally { 
+    commit('SET_LOADING', { key: 'auth', value: false })
+  }
+},
+    
+
+    // 注册
     async register({ commit }, userData) {
       try {
         commit('SET_LOADING', { key: 'auth', value: true })
+        commit('CLEAR_ERROR')
+        
+        // 调用注册API
         const response = await authAPI.register(userData)
         
-        // 根据 OpenAPI 文档，响应包含 baseResponse
-        if (response.baseResponse && response.baseResponse.code === 200) {
-          const { user } = response
-          const token = response.token || response.access_token
-          commit('SET_AUTH', { user, token })
-          commit('CLEAR_ERROR')
-          return user
+        // 处理响应
+        if (response && response.data) {
+          // 检查是否是baseResponse格式
+          if (response.data.baseResponse) {
+            if (response.data.baseResponse.code === 10000) {
+              // 注册成功，但通常注册后需要登录
+              return response.data
+            } else {
+              throw new Error(response.data.baseResponse.message || '注册失败')
+            }
+          } else {
+            // 直接返回数据格式
+            return response.data
+          }
         } else {
-          throw new Error(response.baseResponse?.message || '注册失败')
+          throw new Error('注册响应数据格式不正确')
         }
       } catch (error) {
-        commit('SET_ERROR', error.message || '注册失败')
-        throw error
+        // 错误处理
+        let errorMessage = '注册失败'
+        
+        if (error.response) {
+          // 服务器响应了错误状态码
+          if (error.response.status === 409) {
+            errorMessage = '该邮箱或用户名已被注册'
+          } else if (error.response.status === 400) {
+            errorMessage = '请求参数错误，请检查输入'
+          } else if (error.response.status === 500) {
+            errorMessage = '服务器内部错误，请稍后重试'
+          } else {
+            errorMessage = `注册失败 (${error.response.status})`
+          }
+        } else if (error.request) {
+          // 请求已发出但没有收到响应
+          errorMessage = '网络连接失败，请检查网络设置'
+        } else if (error.message) {
+          // 其他错误信息
+          errorMessage = error.message
+        }
+        
+        commit('SET_ERROR', errorMessage)
+        throw new Error(errorMessage)
       } finally {
         commit('SET_LOADING', { key: 'auth', value: false })
       }
     },
     
+    initAuth({ commit }) {
+      commit('INIT_AUTH')
+    },
   
     // 登出
     async logout({ commit }) {
       try {
+        // 调用登出API
         await authAPI.logout()
       } catch (error) {
         console.error('Logout API error:', error)

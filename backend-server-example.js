@@ -20,7 +20,7 @@ const users = [
   { id: 'admin', name: '管理员', role: 'admin', college: '系统管理', password: '123456' }
 ]
 
-const courses = [
+const courses = [ 
   {
     id: 1,
     title: '计算机科学导论',
