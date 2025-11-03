@@ -42,7 +42,11 @@
           </select>
         </div>
         <div class="col-span-2 flex justify-end">
-          <button class="btn-primary flex items-center h-10">
+          <button class="btn-primary flex items-center h-10 mr-3" @click="onSearchDoc">
+            <span class="iconify mr-2" data-icon="mdi:magnify"></span>
+            文档版搜索
+          </button>
+          <button class="btn-secondary flex items-center h-10" @click="onUploadMock">
             <span class="iconify mr-2" data-icon="mdi:upload"></span>
             上传资源
           </button>
@@ -103,17 +107,27 @@
             <span>{{ resource.rating }}</span>
           </div>
         </div>
+        <div class="grid grid-cols-2 gap-2 mt-3">
+          <button 
+            class="btn-secondary w-full text-sm"
+            @click="viewResourceDetail(resource)"
+          >查看详情</button>
+          <button 
+            class="btn-primary w-full text-sm"
+            @click="onDownload(resource)"
+          >下载</button>
+        </div>
         <button 
-          class="btn-secondary w-full mt-3 text-sm"
-          @click="viewResourceDetail(resource)"
-        >查看详情</button>
+          class="btn-danger w-full mt-2 text-xs"
+          @click="onReport(resource)"
+        >举报</button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import ResourceCard from '../components/ResourceCard.vue'
 
 export default {
@@ -147,14 +161,55 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['updateFilter', 'searchResources', 'getResourceDownloadUrl', 'reportResource', 'uploadResource']),
     onCourseFilterChange() {
-      this.$store.dispatch('updateFilter', { key: 'courseTitle', value: this.selectedCourseTitle })
+      this.updateFilter({ key: 'courseTitle', value: this.selectedCourseTitle })
     },
     onTypeFilterChange() {
-      this.$store.dispatch('updateFilter', { key: 'resourceType', value: this.selectedType })
+      this.updateFilter({ key: 'resourceType', value: this.selectedType })
     },
     onRatingFilterChange() {
-      this.$store.dispatch('updateFilter', { key: 'resourceRating', value: this.selectedRating })
+      this.updateFilter({ key: 'resourceRating', value: this.selectedRating })
+    },
+    async onSearchDoc() {
+      try {
+        const params = {}
+        // keyword 暂不从UI输入，保持空；类型映射
+        if (this.selectedType && this.selectedType !== '全部类型') params.sortBy = 'latest'
+        // 评分筛选不在文档搜索直接支持，先忽略或前端过滤
+        const res = await this.searchResources('', params)
+        // searchResources 已返回 data，且 store 内会未变更资源；这里不强制覆盖
+        console.log('文档版资源搜索完成', res)
+      } catch (e) {
+        console.warn('资源搜索失败：', e)
+      }
+    },
+    async onDownload(resource) {
+      try {
+        const data = await this.getResourceDownloadUrl(resource.id)
+        if (data && data.download_url) {
+          window.location.href = data.download_url
+          this.$store.commit('INCREMENT_RESOURCE_DOWNLOADS', resource.id)
+        }
+      } catch (e) {
+        alert('下载失败，请稍后重试')
+      }
+    },
+    async onReport(resource) {
+      try {
+        await this.reportResource({ resourceId: resource.id, content: '低质量或侵权' })
+        alert('举报已提交')
+      } catch (e) {
+        alert('举报失败，请稍后重试')
+      }
+    },
+    async onUploadMock() {
+      try {
+        await this.uploadResource({ title: '示例上传', course_id: 1, tags: [{ tagId: 1, tagName: '示例' }] })
+        alert('上传完成（示例）')
+      } catch (e) {
+        alert('上传失败，请稍后重试')
+      }
     },
     getTypeClass(type) {
       const classes = {

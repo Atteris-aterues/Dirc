@@ -36,9 +36,13 @@ export const resourceAPI = {
 
   // 下载资源
   downloadResource(id) {
-    return api.get(`/resources/${id}/download`, {
-      responseType: 'blob'
-    })
+    // 文档返回 { download_url }，前端可自行跳转
+    return api.get(`/resources/${id}/download`)
+  },
+
+  // LearnShare1.md: 举报资源
+  reportResource(resourceId, content) {
+    return api.post(`/report/resources/${resourceId}`, { content })
   },
 
   // 获取资源评价

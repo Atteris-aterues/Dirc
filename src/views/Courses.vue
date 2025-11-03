@@ -13,7 +13,7 @@
             <select 
               class="w-full border border-gray-300 rounded-md py-2 px-3"
               v-model="filters.college"
-              @change="updateFilter('college', filters.college)"
+              @change="onFilterChange('college', filters.college)"
             >
               <option>全部学院</option>
               <option>计算机学院</option>
@@ -26,7 +26,7 @@
             <select 
               class="w-full border border-gray-300 rounded-md py-2 px-3"
               v-model="filters.credits"
-              @change="updateFilter('credits', filters.credits)"
+              @change="onFilterChange('credits', filters.credits)"
             >
               <option>不限学分</option>
               <option>1学分</option>
@@ -40,7 +40,7 @@
             <select 
               class="w-full border border-gray-300 rounded-md py-2 px-3"
               v-model="filters.rating"
-              @change="updateFilter('rating', filters.rating)"
+              @change="onFilterChange('rating', filters.rating)"
             >
               <option>全部评分</option>
               <option>4分以上</option>
@@ -327,7 +327,45 @@ export default {
     ...mapGetters(['filteredCourses'])
   },
   methods: {
-    ...mapActions(['submitRating', 'updateFilter', 'selectCourse']),
+    ...mapActions(['submitRating', 'updateFilter', 'selectCourse', 'searchCoursesDoc']),
+    async loadCoursesDoc() {
+      // 将现有筛选条件映射到文档版参数
+      const params = {}
+      // 学院 -> 暂无真实映射，保留占位（若后端需要，可传 collegeId）
+      // 评分 -> minRating
+      if (this.filters.rating && this.filters.rating !== '全部评分') {
+        const num = parseFloat(String(this.filters.rating).replace('分以上', ''))
+        if (!isNaN(num)) params.minRating = num
+      }
+      // 学分 -> 暂不映射（文档未定义学分筛选）
+      // 分页
+      params.page_size = 20
+      params.page_num = 1
+
+      try {
+        const data = await this.searchCoursesDoc(params)
+        // 文档返回 { baseResponse, courses: [...] }
+        const list = Array.isArray(data?.courses) ? data.courses : []
+        const mapped = list.map(item => ({
+          id: item.courseId,
+          title: item.courseName,
+          instructor: '授课教师',
+          college: '学院',
+          rating: 4.0,
+          credits: item.credit,
+          description: item.description,
+          image: '/images/courses/course-placeholder.svg'
+        }))
+        this.$store.commit('SET_COURSES', mapped)
+      } catch (e) {
+        // 保持现有本地兜底数据
+        console.warn('按文档版获取课程失败，保留现有数据：', e)
+      }
+    },
+    async onFilterChange(key, value) {
+      await this.updateFilter({ key, value })
+      await this.loadCoursesDoc()
+    },
     viewCourseDetails(course) {
       this.selectCourse(course)
     },
@@ -428,8 +466,8 @@ export default {
   },
   async created() {
     try {
-      // 加载课程列表（已经包含本地数据兜底）
-      await this.$store.dispatch('fetchCourses')
+      // 优先使用文档版接口加载；失败则保留本地/已有数据
+      await this.loadCoursesDoc()
     } catch (error) {
       console.error('加载课程失败:', error)
       // 即使出错，也尝试使用state中已有的数据

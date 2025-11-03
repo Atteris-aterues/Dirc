@@ -683,9 +683,39 @@ async login({ commit }, credentials) {
       }
     },
 
+    // LearnShare1.md: 获取课程详情（文档版）
+    async fetchCourseDetailsDoc({ commit }, courseId) {
+      try {
+        const response = await courseAPI.getCourseDetailsDoc(courseId)
+        return response.data
+      } catch (error) {
+        throw error
+      }
+    },
+
     async searchCourses({ commit }, { keyword, filters }) {
       try {
         const response = await courseAPI.searchCourses(keyword, filters)
+        return response.data
+      } catch (error) {
+        throw error
+      }
+    },
+
+    // LearnShare1.md: 搜索课程（文档版参数）
+    async searchCoursesDoc({ commit }, params = {}) {
+      try {
+        const response = await courseAPI.searchCoursesDoc(params)
+        return response.data
+      } catch (error) {
+        throw error
+      }
+    },
+
+    // LearnShare1.md: 获取课程资源
+    async fetchCourseResourcesDoc({ commit }, { courseId, params = {} }) {
+      try {
+        const response = await courseAPI.getCourseResourcesDoc(courseId, params)
         return response.data
       } catch (error) {
         throw error
@@ -735,6 +765,26 @@ async login({ commit }, credentials) {
     async searchResources({ commit }, { keyword, filters }) {
       try {
         const response = await resourceAPI.searchResources(keyword, filters)
+        return response.data
+      } catch (error) {
+        throw error
+      }
+    },
+
+    // LearnShare1.md: 举报资源
+    async reportResource({ commit }, { resourceId, content }) {
+      try {
+        const response = await resourceAPI.reportResource(resourceId, content)
+        return response.data
+      } catch (error) {
+        throw error
+      }
+    },
+
+    // LearnShare1.md: 下载资源，返回下载链接
+    async getResourceDownloadUrl({ commit }, resourceId) {
+      try {
+        const response = await resourceAPI.downloadResource(resourceId)
         return response.data
       } catch (error) {
         throw error

@@ -12,11 +12,27 @@ export const courseAPI = {
     return api.get(`/courses/${id}`)
   },
 
+  // LearnShare1.md: 课程详情（文档版结构）
+  getCourseDetailsDoc(courseId) {
+    return api.get(`/courses/${courseId}/details`)
+  },
+
   // 搜索课程
   searchCourses(keyword, filters = {}) {
     return api.get('/courses/search', {
       params: { keyword, ...filters }
     })
+  },
+
+  // LearnShare1.md: 搜索课程（文档版参数名）
+  searchCoursesDoc(params = {}) {
+    // 支持 keywords、collegeId、grade、minRating、page_size、page_num
+    return api.get('/courses/search', { params })
+  },
+
+  // LearnShare1.md: 获取课程资源列表
+  getCourseResourcesDoc(courseId, params = {}) {
+    return api.get(`/courses/${courseId}/resources`, { params })
   },
 
   // 获取用户收藏的课程
