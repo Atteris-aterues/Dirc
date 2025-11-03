@@ -25,240 +25,6 @@ Base URLs:
 
 # Authentication
 
-# 课程
-
-## GET 搜索课程
-
-GET /api/courses/search
-
-获取课程列表，支持按学院、专业、年级、学分、评分等进行筛选和搜索。
-
-### 请求参数
-
-|名称|位置|类型|必选|说明|
-|---|---|---|---|---|
-|keywords|query|string| 否 |搜索关键词（课程名或教师名）|
-|collegeId|query|integer| 否 |学院ID|
-|grade|query|string| 否 |年级|
-|minRating|query|number(float)| 否 |最小综合评分|
-|page_size|query|integer| 是 |页面大小|
-|page_num|query|integer| 是 |页码|
-
-> 返回示例
-
-> 200 Response
-
-```json
-{
-  "baseResponse": {
-    "code": 0,
-    "message": "string"
-  },
-  "courses": [
-    {
-      "courseId": 0,
-      "courseName": "string",
-      "teacherId": 0,
-      "credit": 0,
-      "majorId": 0,
-      "grade": "string",
-      "description": "string",
-      "createdAt": 0,
-      "updatedAt": 0
-    }
-  ]
-}
-```
-
-### 返回结果
-
-|状态码|状态码含义|说明|数据模型|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|成功获取课程列表|Inline|
-
-### 返回数据结构
-
-状态码 **200**
-
-|名称|类型|必选|约束|中文名|说明|
-|---|---|---|---|---|---|
-|» baseResponse|object|true|none||none|
-|»» code|integer|true|none||none|
-|»» message|string|true|none||none|
-|» courses|[object]|true|none||none|
-|»» courseId|integer|true|none||none|
-|»» courseName|string|true|none||none|
-|»» teacherId|integer|true|none||none|
-|»» credit|integer|true|none||none|
-|»» majorId|integer|true|none||none|
-|»» grade|string|true|none||none|
-|»» description|string|true|none||none|
-|»» createdAt|integer|true|none||none|
-|»» updatedAt|integer|true|none||none|
-
-## GET 获取课程详情
-
-GET /api/courses/{course_id}
-
-### 请求参数
-
-|名称|位置|类型|必选|说明|
-|---|---|---|---|---|
-|course_id|path|string| 是 |none|
-
-> 返回示例
-
-> 200 Response
-
-```json
-{
-  "baseResponse": {
-    "code": 0,
-    "message": "string"
-  },
-  "course": {
-    "courseId": 0,
-    "courseName": "string",
-    "teacherId": 0,
-    "credit": 0,
-    "majorId": 0,
-    "grade": "string",
-    "description": "string",
-    "createdAt": 0,
-    "updatedAt": 0
-  }
-}
-```
-
-### 返回结果
-
-|状态码|状态码含义|说明|数据模型|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|成功获取课程详情|Inline|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|课程不存在|Inline|
-
-### 返回数据结构
-
-状态码 **200**
-
-|名称|类型|必选|约束|中文名|说明|
-|---|---|---|---|---|---|
-|» baseResponse|object|true|none||none|
-|»» code|integer|true|none||none|
-|»» message|string|true|none||none|
-|» course|object|true|none||none|
-|»» courseId|integer|true|none||none|
-|»» courseName|string|true|none||none|
-|»» teacherId|integer|true|none||none|
-|»» credit|integer|true|none||none|
-|»» majorId|integer|true|none||none|
-|»» grade|string|true|none||none|
-|»» description|string|true|none||none|
-|»» createdAt|integer|true|none||none|
-|»» updatedAt|integer|true|none||none|
-
-## GET 获取课程资源列表
-
-GET /api/courses/{course_id}/resources
-
-### 请求参数
-
-|名称|位置|类型|必选|说明|
-|---|---|---|---|---|
-|course_id|path|string| 是 |none|
-|page_num|query|number| 是 |页码|
-|page_size|query|number| 是 |每页数量|
-|type|query|string| 否 |资源类型|
-|status|query|string| 否 |资源状态|
-
-> 返回示例
-
-> 200 Response
-
-```json
-{
-  "baseResponse": {
-    "code": 0,
-    "message": "string"
-  },
-  "resources": [
-    {
-      "resourceId": 0,
-      "title": "string",
-      "description": "string",
-      "filePath": "string",
-      "fileType": "string",
-      "fileSize": 0,
-      "uploaderId": 0,
-      "courseId": 0,
-      "downloadCount": 0,
-      "averageRating": 0,
-      "ratingCount": 0,
-      "status": 0,
-      "createdAt": 0
-    }
-  ]
-}
-```
-
-### 返回结果
-
-|状态码|状态码含义|说明|数据模型|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
-
-### 返回数据结构
-
-状态码 **200**
-
-|名称|类型|必选|约束|中文名|说明|
-|---|---|---|---|---|---|
-|» baseResponse|object|true|none||none|
-|»» code|integer|true|none||none|
-|»» message|string|true|none||none|
-|» resources|[object]|true|none||none|
-|»» resourceId|integer|false|none||none|
-|»» title|string|false|none||none|
-|»» description|string|false|none||none|
-|»» filePath|string|false|none||none|
-|»» fileType|string|false|none||none|
-|»» fileSize|integer|false|none||none|
-|»» uploaderId|integer|false|none||none|
-|»» courseId|integer|false|none||none|
-|»» downloadCount|integer|false|none||none|
-|»» averageRating|integer|false|none||none|
-|»» ratingCount|integer|false|none||none|
-|»» status|integer|false|none||none|
-|»» createdAt|integer|false|none||none|
-
-# 数据模型
----
-title: 默认模块
-language_tabs:
-  - shell: Shell
-  - http: HTTP
-  - javascript: JavaScript
-  - ruby: Ruby
-  - python: Python
-  - php: PHP
-  - java: Java
-  - go: Go
-toc_footers: []
-includes: []
-search: true
-code_clipboard: true
-highlight_theme: darkula
-headingLevel: 2
-generator: "@tarslib/widdershins v4.0.30"
-
----
-
-# 默认模块
-
-Base URLs:
-
-# Authentication
-
 # 资源
 
 ## GET 搜索资源
@@ -277,6 +43,8 @@ GET /api/resources/search
 |course_id|query|string| 否 |课程ID|
 |page_size|query|integer| 是 |页面大小|
 |page_num|query|integer| 是 |页码|
+|Authorization|header|string| 否 |none|
+|Refresh-Token|header|string| 否 |none|
 
 #### 枚举值
 
@@ -379,6 +147,7 @@ tags: ""
 |名称|位置|类型|必选|说明|
 |---|---|---|---|---|
 |Authorization|header|string| 是 |none|
+|Refresh-Token|header|string| 否 |none|
 |body|body|object| 否 |none|
 |» file|body|string(binary)| 是 |资源文件 (最大3MB)|
 |» title|body|string| 是 |资源标题|
@@ -416,6 +185,7 @@ GET /api/resources/{resource_id}/download
 |---|---|---|---|---|
 |resource_id|path|string| 是 |none|
 |Authorization|header|string| 是 |none|
+|Refresh-Token|header|string| 否 |none|
 
 > 返回示例
 
@@ -443,14 +213,14 @@ GET /api/resources/{resource_id}/download
 
 ## POST 举报资源
 
-POST /api/report/resources/{resource_id}
+POST /api/resources/{resource_id}/report
 
 用户举报违规、低质量或侵权的资源。
 
 > Body 请求参数
 
 ```yaml
-content: 涉黄
+reason: 涉黄
 
 ```
 
@@ -460,15 +230,21 @@ content: 涉黄
 |---|---|---|---|---|
 |resource_id|path|string| 是 |none|
 |Authorization|header|string| 是 |none|
+|Refresh-Token|header|string| 否 |none|
 |body|body|object| 否 |none|
-|» content|body|string| 否 |none|
+|» reason|body|string| 否 |none|
 
 > 返回示例
 
-> 202 Response
+> 200 Response
 
 ```json
-{}
+{
+  "baseResp": {
+    "code": 0,
+    "message": "string"
+  }
+}
 ```
 
 > 404 Response
@@ -481,10 +257,18 @@ content: 涉黄
 
 |状态码|状态码含义|说明|数据模型|
 |---|---|---|---|
-|202|[Accepted](https://tools.ietf.org/html/rfc7231#section-6.3.3)|举报提交成功，进入审核队列|Inline|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|举报提交成功，进入审核队列|Inline|
 |404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|none|Inline|
 
 ### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» baseResp|object|true|none||none|
+|»» code|integer|true|none||none|
+|»» message|string|true|none||none|
 
 ## GET 获取资源信息
 
@@ -497,12 +281,46 @@ GET /api/resources/{resource_id}
 |名称|位置|类型|必选|说明|
 |---|---|---|---|---|
 |resource_id|path|string| 是 |none|
+|Authorization|header|string| 否 |none|
+|Refresh-Token|header|string| 否 |none|
 
 > 返回示例
 
 > 200 Response
 
 ```json
+{
+  "baseResp": {
+    "code": 0,
+    "message": "string"
+  },
+  "resource": {
+    "resourceId": 0,
+    "title": "string",
+    "description": "string",
+    "filePath": "string",
+    "fileType": "string",
+    "fileSize": 0,
+    "uploaderId": 0,
+    "courseId": 0,
+    "downloadCount": 0,
+    "averageRating": 0,
+    "ratingCount": 0,
+    "status": 0,
+    "createdAt": 0,
+    "tags": [
+      {
+        "tagId": 0,
+        "tagName": "string"
+      }
+    ]
+  }
+}
+```
+
+> 404 Response
+
+```
 {}
 ```
 
@@ -511,10 +329,34 @@ GET /api/resources/{resource_id}
 |状态码|状态码含义|说明|数据模型|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|none|Inline|
 
 ### 返回数据结构
 
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» baseResp|object|true|none||none|
+|»» code|integer|true|none||none|
+|»» message|string|true|none||none|
+|» resource|object|true|none||none|
+|»» resourceId|integer|true|none||none|
+|»» title|string|true|none||none|
+|»» description|string|true|none||none|
+|»» filePath|string|true|none||none|
+|»» fileType|string|true|none||none|
+|»» fileSize|integer|true|none||none|
+|»» uploaderId|integer|true|none||none|
+|»» courseId|integer|true|none||none|
+|»» downloadCount|integer|true|none||none|
+|»» averageRating|number|true|none||none|
+|»» ratingCount|integer|true|none||none|
+|»» status|integer|true|none||none|
+|»» createdAt|integer|true|none||none|
+|»» tags|[object]|true|none||none|
+|»»» tagId|integer|true|none||none|
+|»»» tagName|string|true|none||none|
+
 # 数据模型
-
-
 

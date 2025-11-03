@@ -12,16 +12,41 @@ export const resourceAPI = {
     return api.get(`/resources/${id}`)
   },
 
-  // 搜索资源
-  searchResources(keyword, filters = {}) {
-    return api.get('/resources/search', {
-      params: { keyword, ...filters }
-    })
+  // 搜索资源（兼容：传入 keyword+filters 或直接传入完整 params）
+  searchResources(keywordOrParams, filters = {}) {
+    const params = typeof keywordOrParams === 'object'
+      ? (keywordOrParams || {})
+      : { keyword: keywordOrParams, ...filters }
+    // 文档参数：keyword, tagId, sortBy, course_id, page_size, page_num
+    return api.get('/resources/search', { params })
   },
 
-  // 上传资源
-  uploadResource(resourceData) {
-    return api.post('/resources', resourceData)
+  // 上传资源（multipart/form-data）
+  // 支持两种用法：
+  //  1) 直接传入 FormData
+  //  2) 传入普通对象：{ file, title, description, course_id, tags }
+  uploadResource(resourceData, config = {}) {
+    let body = resourceData
+    const cfg = { ...(config || {}) }
+    const isFormData = typeof FormData !== 'undefined' && resourceData instanceof FormData
+    if (!isFormData) {
+      body = new FormData()
+      if (resourceData && typeof resourceData === 'object') {
+        if (resourceData.file !== undefined) body.append('file', resourceData.file)
+        if (resourceData.title !== undefined) body.append('title', resourceData.title)
+        if (resourceData.description !== undefined) body.append('description', resourceData.description)
+        if (resourceData.course_id !== undefined) body.append('course_id', resourceData.course_id)
+        // 文档 tags 为 [string]，既兼容数组也兼容逗号分隔字符串
+        if (resourceData.tags !== undefined) {
+          const tags = Array.isArray(resourceData.tags)
+            ? resourceData.tags
+            : String(resourceData.tags).split(',').map(s => s.trim()).filter(Boolean)
+          tags.forEach(t => body.append('tags', t))
+        }
+      }
+    }
+    cfg.headers = { ...(cfg.headers || {}), 'Content-Type': 'multipart/form-data' }
+    return api.post('/resources', body, cfg)
   },
 
   // 更新资源信息
@@ -40,9 +65,9 @@ export const resourceAPI = {
     return api.get(`/resources/${id}/download`)
   },
 
-  // LearnShare1.md: 举报资源
-  reportResource(resourceId, content) {
-    return api.post(`/report/resources/${resourceId}`, { content })
+  // 举报资源（POST /resources/{resource_id}/report）
+  reportResource(resourceId, reason) {
+    return api.post(`/resources/${resourceId}/report`, { reason })
   },
 
   // 获取资源评价

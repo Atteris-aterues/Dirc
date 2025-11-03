@@ -180,7 +180,7 @@ export default {
     },
     async onSearchDoc() {
       try {
-        const params = {}
+        const params = { page_size: 10, page_num: 1 }
         // keyword 暂不从UI输入，保持空；类型映射
         if (this.selectedType && this.selectedType !== '全部类型') params.sortBy = 'latest'
         // 评分筛选不在文档搜索直接支持，先忽略或前端过滤
@@ -204,7 +204,7 @@ export default {
     },
     async onReport(resource) {
       try {
-        await this.reportResource({ resourceId: resource.id, content: '低质量或侵权' })
+        await this.reportResource({ resourceId: resource.id, reason: '低质量或侵权' })
         alert('举报已提交')
       } catch (e) {
         alert('举报失败，请稍后重试')

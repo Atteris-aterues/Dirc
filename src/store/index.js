@@ -737,17 +737,19 @@ async login({ commit }, credentials) {
 
     async searchResources({ commit }, { keyword, filters }) {
       try {
-        const response = await resourceAPI.searchResources(keyword, filters)
+        const defaultPaging = { page_size: 10, page_num: 1 }
+        const mergedFilters = { ...defaultPaging, ...(filters || {}) }
+        const response = await resourceAPI.searchResources(keyword, mergedFilters)
         return response.data
       } catch (error) {
         throw error
       }
     },
 
-    // LearnShare1.md: 举报资源
-    async reportResource({ commit }, { resourceId, content }) {
+    // 举报资源
+    async reportResource({ commit }, { resourceId, reason }) {
       try {
-        const response = await resourceAPI.reportResource(resourceId, content)
+        const response = await resourceAPI.reportResource(resourceId, reason)
         return response.data
       } catch (error) {
         throw error
