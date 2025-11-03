@@ -43,6 +43,26 @@ const courses = [
   }
 ]
 
+// 模拟资源数据存储
+let resourcesStore = [
+  {
+    resourceId: 1,
+    title: '数据结构期末复习重点',
+    description: '包含高频考点与习题解析',
+    filePath: '/files/ds-review.pdf',
+    fileType: 'pdf',
+    fileSize: 1024 * 1024,
+    uploaderId: 1001,
+    courseId: 2,
+    downloadCount: 326,
+    averageRating: 4.2,
+    ratingCount: 21,
+    status: 1,
+    createdAt: Date.now(),
+    tags: [{ tagId: 1, tagName: '期末复习' }]
+  }
+]
+
 // 认证中间件
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization']
@@ -203,6 +223,180 @@ app.get('/api/courses/:id', (req, res) => {
     message: '获取课程详情成功',
     data: course
   })
+})
+
+// ====== LearnShare1.md 定义的接口 ======
+// GET /api/courses/search
+app.get('/api/courses/search', (req, res) => {
+  const {
+    keywords = '',
+    collegeId,
+    grade,
+    minRating,
+    page_size = 10,
+    page_num = 1
+  } = req.query
+
+  // 映射示例：此处无学院表，用关键词与评分筛选示例课程
+  let list = courses.map(c => ({
+    courseId: c.id,
+    courseName: c.title,
+    teacherId: 0,
+    credit: c.credits,
+    majorId: 0,
+    grade: grade || '通用',
+    description: c.description,
+    createdAt: Date.now() - 86400000,
+    updatedAt: Date.now()
+  }))
+
+  if (keywords) {
+    const kw = String(keywords)
+    list = list.filter(i => i.courseName.includes(kw))
+  }
+  if (minRating) {
+    const mr = parseFloat(minRating)
+    list = list.filter(i => {
+      const base = courses.find(c => c.id === i.courseId)
+      return base ? base.rating >= mr : true
+    })
+  }
+  if (collegeId) {
+    // 示例：没有学院表，这里不做实际过滤
+  }
+
+  const size = parseInt(page_size)
+  const num = parseInt(page_num)
+  const start = (num - 1) * size
+  const page = list.slice(start, start + size)
+
+  return res.json({
+    baseResponse: { code: 0, message: 'ok' },
+    courses: page
+  })
+})
+
+// GET /api/courses/{course_id}
+app.get('/api/courses/:course_id/details', (req, res) => {
+  const id = parseInt(req.params.course_id)
+  const c = courses.find(x => x.id === id)
+  if (!c) {
+    return res.status(404).json({ baseResponse: { code: 404, message: '课程不存在' } })
+  }
+  return res.json({
+    baseResponse: { code: 0, message: 'ok' },
+    course: {
+      courseId: c.id,
+      courseName: c.title,
+      teacherId: 0,
+      credit: c.credits,
+      majorId: 0,
+      grade: '通用',
+      description: c.description,
+      createdAt: Date.now() - 86400000,
+      updatedAt: Date.now()
+    }
+  })
+})
+
+// GET /api/courses/{course_id}/resources
+app.get('/api/courses/:course_id/resources', (req, res) => {
+  const id = parseInt(req.params.course_id)
+  const { page_num = 1, page_size = 10, type, status } = req.query
+  let list = resourcesStore.filter(r => r.courseId === id)
+  if (type) list = list.filter(r => r.fileType === type)
+  if (status) list = list.filter(r => String(r.status) === String(status))
+
+  const size = parseInt(page_size)
+  const num = parseInt(page_num)
+  const start = (num - 1) * size
+  const page = list.slice(start, start + size)
+
+  return res.json({
+    baseResponse: { code: 0, message: 'ok' },
+    resources: page
+  })
+})
+
+// GET /api/resources/search
+app.get('/api/resources/search', (req, res) => {
+  const { keyword = '', tagId, sortBy, course_id, page_size = 10, page_num = 1 } = req.query
+  let list = [...resourcesStore]
+  if (keyword) list = list.filter(r => r.title.includes(String(keyword)))
+  if (course_id) list = list.filter(r => String(r.courseId) === String(course_id))
+  if (tagId) list = list.filter(r => (r.tags || []).some(t => String(t.tagId) === String(tagId)))
+
+  if (sortBy === 'hot') list.sort((a, b) => b.downloadCount - a.downloadCount)
+  else if (sortBy === 'rating') list.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+  else list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+
+  const size = parseInt(page_size)
+  const num = parseInt(page_num)
+  const start = (num - 1) * size
+  const page = list.slice(start, start + size)
+
+  return res.json({
+    baseResp: { code: 0, message: 'ok' },
+    resources: page,
+    total: list.length
+  })
+})
+
+// POST /api/resources （简化：接收JSON，不处理真实文件）
+app.post('/api/resources', authenticateToken, (req, res) => {
+  const { title, description = '', course_id, tags = [] } = req.body || {}
+  if (!title || !course_id) {
+    return res.status(400).json({ code: 400, message: '缺少必填字段 title / course_id' })
+  }
+  const newId = (resourcesStore[resourcesStore.length - 1]?.resourceId || 0) + 1
+  const item = {
+    resourceId: newId,
+    title,
+    description,
+    filePath: `/files/${newId}.pdf`,
+    fileType: 'pdf',
+    fileSize: 512 * 1024,
+    uploaderId: req.user?.id || 0,
+    courseId: parseInt(course_id),
+    downloadCount: 0,
+    averageRating: 0,
+    ratingCount: 0,
+    status: 1,
+    createdAt: Date.now(),
+    tags: Array.isArray(tags) ? tags : []
+  }
+  resourcesStore.push(item)
+  // 按文档：201 Created 或 202 Accepted，这里用201
+  return res.status(201).json({})
+})
+
+// GET /api/resources/{resource_id}/download
+app.get('/api/resources/:resource_id/download', authenticateToken, (req, res) => {
+  const id = parseInt(req.params.resource_id)
+  const r = resourcesStore.find(x => x.resourceId === id)
+  if (!r) return res.status(404).json({ code: 404, message: '资源不存在' })
+  // 增加下载计数
+  r.downloadCount += 1
+  return res.json({ download_url: `http://localhost:${PORT}${r.filePath}` })
+})
+
+// POST /api/report/resources/{resource_id}
+app.post('/api/report/resources/:resource_id', authenticateToken, (req, res) => {
+  const id = parseInt(req.params.resource_id)
+  const { content = '' } = req.body || {}
+  const r = resourcesStore.find(x => x.resourceId === id)
+  if (!r) return res.status(404).json({})
+  // 简单记录举报（这里仅打印日志）
+  console.log('资源被举报', { resourceId: id, userId: req.user?.id, content })
+  return res.status(202).json({})
+})
+
+// GET /api/resources/{resource_id}
+app.get('/api/resources/:resource_id', (req, res) => {
+  const id = parseInt(req.params.resource_id)
+  const r = resourcesStore.find(x => x.resourceId === id)
+  if (!r) return res.status(404).json({})
+  return res.json(r)
 })
 
 // 资源相关路由

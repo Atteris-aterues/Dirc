@@ -1,4 +1,4 @@
-<template>
+npmmn<template>
   <div class="px-8 py-6">
     <!-- 资源筛选和上传 -->
     <div class="bg-white card p-5 mb-8">
