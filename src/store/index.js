@@ -444,15 +444,9 @@ async login({ commit }, credentials) {
     
     if (error.response) {
       // 服务器响应了错误状态码
-      if (error.response.status === 401) {
-        errorMessage = '用户名或密码错误';
-      } else if (error.response.status === 400) {
-        errorMessage = '请求参数错误';
-      } else if (error.response.status === 500) {
-        errorMessage = '服务器内部错误';
-      } else {
-        errorMessage = `登录失败 (${error.response.status})`;
-      }
+      if (error.response.status === 400) {
+        errorMessage = '邮箱或密码错误';
+      } 
     } else if (error.request) {
       // 请求已发出但没有收到响应
       errorMessage = '网络连接失败，请检查网络设置';
@@ -501,12 +495,10 @@ async login({ commit }, credentials) {
         
         if (error.response) {
           // 服务器响应了错误状态码
-          if (error.response.status === 409) {
+          if (error.response.data.baseResponse.code === 50001) {
             errorMessage = '该邮箱或用户名已被注册'
-          } else if (error.response.status === 400) {
-            errorMessage = '请求参数错误，请检查输入'
-          } else if (error.response.status === 500) {
-            errorMessage = '服务器内部错误，请稍后重试'
+          } else if (error.response.data.baseResponse.code) {
+            errorMessage = error.response.data.baseResponse.message
           } else {
             errorMessage = `注册失败 (${error.response.status})`
           }

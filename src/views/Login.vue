@@ -348,6 +348,18 @@ export default {
       placeholder.className = 'bg-gray-200 border-2 border-dashed rounded-xl w-20 h-20 mx-auto mb-4'
       event.target.parentNode.insertBefore(placeholder, event.target)
     }
+  },
+
+    watch: {
+    showRegister(newVal) {
+      if (newVal) {
+        // 当打开注册模态框时，清除所有错误信息
+        this.clearErrorMessage();
+      }else {
+        // 当关闭注册模态框时，清除所有错误信息
+        this.clearErrorMessage();
+      }
+    }
   }
 }
 </script>
