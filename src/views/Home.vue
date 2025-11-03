@@ -381,6 +381,7 @@
         v-for="resource in latestResources" 
         :key="resource.id"
         :resource="resource"
+        @view-details="viewResourceDetail"
       />
     </div>
   </div>
@@ -416,7 +417,11 @@ export default {
     viewCourseDetails(course) {
       this.selectCourse(course)
       this.$router.push('/courses')
-    }
+    },
+    viewResourceDetail(resource) {
+      this.$store.commit('SET_SELECTED_RESOURCE', resource)
+      this.$router.push({ name: 'ResourceDetail' })
+    },
   },
   mounted() {
     // 鼠标悬停时暂停滚动

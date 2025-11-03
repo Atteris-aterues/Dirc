@@ -100,7 +100,11 @@
                   :key="star"
                   class="star-char text-2xl"
                   :class="star <= resourceUserRating.rating ? 'active' : 'inactive'"
+                  role="button"
+                  tabindex="0"
+                  :aria-label="`评分${star}星`"
                   @click="setRating(star)"
+                  @keydown.enter.prevent="setRating(star)"
                 >{{ star <= resourceUserRating.rating ? '★' : '☆' }}</span>
               </div>
             </div>

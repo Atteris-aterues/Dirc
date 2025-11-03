@@ -300,8 +300,14 @@ export default new Vuex.Store({
       Vue.set(state.resourceUserRating, 'rating', rating)
       Vue.set(state.resourceUserRating, 'comment', comment)
     },
+    SET_RESOURCE_COMMENTS(state, comments) {
+      state.resourceComments = comments || []
+    },
     ADD_RESOURCE_COMMENT(state, comment) {
       state.resourceComments.unshift(comment)
+    },
+    REMOVE_RESOURCE_COMMENT(state, commentId) {
+      state.resourceComments = state.resourceComments.filter(c => c.id !== commentId)
     },
     INCREMENT_RESOURCE_DOWNLOADS(state, resourceId) {
       // 更新 resources 列表
@@ -319,8 +325,14 @@ export default new Vuex.Store({
       }
     },
     
+    SET_COMMENTS(state, comments) {
+      state.comments = comments || []
+    },
     ADD_COMMENT(state, comment) {
       state.comments.unshift(comment)
+    },
+    REMOVE_COMMENT(state, commentId) {
+      state.comments = state.comments.filter(c => c.id !== commentId)
     },
     
     UPDATE_USER(state, user) {
@@ -604,18 +616,143 @@ async login({ commit }, credentials) {
       commit('SET_SELECTED_COURSE', course)
     },
     
-    submitRating({ commit }, { rating, comment }) {
-      const newComment = {
-        id: Date.now(),
-        author: '当前用户',
-        rating,
-        date: new Date().toISOString().split('T')[0],
-        content: comment
+    // 课程：提交评分与评论（替换原本仅前端入库的实现）
+    async submitRating({ commit, state }, { rating, comment }) {
+      const courseId = state.selectedCourse?.id
+      if (!courseId) {
+        const err = new Error('未选择课程，无法提交评价')
+        commit('SET_ERROR', err.message)
+        throw err
       }
-      commit('ADD_COMMENT', newComment)
-      commit('SET_USER_RATING', { rating: 0, comment: '' })
+      const author = state.currentUser?.username || '当前用户'
+      try {
+        // 先提交评分
+        await courseAPI.submitCourseRating({ courseId, rating })
+        // 再提交评论（同时附带评分，后端可选择是否使用）
+        const res = await courseAPI.submitCourseComment({ courseId, content: comment, rating })
+
+        // 兼容后端返回：若返回评论实体则直接使用，否则本地构造一条
+        const serverComment = res?.data || null
+        const newComment = serverComment && serverComment.id
+          ? serverComment
+          : {
+              id: Date.now(),
+              author,
+              rating,
+              date: new Date().toISOString().split('T')[0],
+              content: comment
+            }
+
+        commit('ADD_COMMENT', newComment)
+        commit('SET_USER_RATING', { rating: 0, comment: '' })
+        return newComment
+      } catch (error) {
+        commit('SET_ERROR', error?.message || '提交课程评价失败')
+        throw error
+      }
     },
-    
+
+    // 课程：拉取评论列表
+    async fetchCourseComments({ commit }, courseId) {
+      try {
+        const { data } = await courseAPI.getCourseComments(courseId)
+        const list = Array.isArray(data) ? data : (data?.items || [])
+        commit('SET_COMMENTS', list)
+        return list
+      } catch (error) {
+        commit('SET_ERROR', error?.message || '加载课程评论失败')
+        throw error
+      }
+    },
+
+    // 课程：删除评论
+    async deleteCourseComment({ commit }, commentId) {
+      try {
+        await courseAPI.deleteCourseComment(commentId)
+        commit('REMOVE_COMMENT', commentId)
+      } catch (error) {
+        commit('SET_ERROR', error?.message || '删除课程评论失败')
+        throw error
+      }
+    },
+
+    // 课程：删除评分（通常不需要更新本地列表）
+    async deleteCourseRating(_, ratingId) {
+      try {
+        await courseAPI.deleteCourseRating(ratingId)
+      } catch (error) {
+        throw error
+      }
+    },
+
+    // 资源：提交评分与评论（ResourceDetail.vue 调用）
+    async submitResourceRating({ commit, state }, { rating, comment }) {
+      const resourceId = state.selectedResource?.id
+      if (!resourceId) {
+        const err = new Error('未选择资源，无法提交评价')
+        commit('SET_ERROR', err.message)
+        throw err
+      }
+      const author = state.currentUser?.username || '当前用户'
+      try {
+        // 先提交评分
+        await resourceAPI.submitResourceRating({ resourceId, rating })
+        // 再提交评论（同时附带评分，后端可选择是否使用）
+        const res = await resourceAPI.submitResourceComment({ resourceId, content: comment, rating })
+
+        const serverComment = res?.data || null
+        const newComment = serverComment && serverComment.id
+          ? serverComment
+          : {
+              id: Date.now(),
+              author,
+              rating,
+              date: new Date().toISOString().split('T')[0],
+              content: comment
+            }
+
+        commit('ADD_RESOURCE_COMMENT', newComment)
+        commit('SET_RESOURCE_USER_RATING', { rating: 0, comment: '' })
+        return newComment
+      } catch (error) {
+        commit('SET_ERROR', error?.message || '提交资源评价失败')
+        throw error
+      }
+    },
+
+    // 资源：拉取评论列表
+    async fetchResourceComments({ commit }, resourceId) {
+      try {
+        const { data } = await resourceAPI.getResourceComments(resourceId)
+        const list = Array.isArray(data) ? data : (data?.items || [])
+        commit('SET_RESOURCE_COMMENTS', list)
+        return list
+      } catch (error) {
+        commit('SET_ERROR', error?.message || '加载资源评论失败')
+        throw error
+      }
+    },
+
+    // 资源：删除评论
+    async deleteResourceComment({ commit }, commentId) {
+      try {
+        await resourceAPI.deleteResourceComment(commentId)
+        commit('REMOVE_RESOURCE_COMMENT', commentId)
+      } catch (error) {
+        commit('SET_ERROR', error?.message || '删除资源评论失败')
+        throw error
+      }
+    },
+
+    // 资源：删除评分
+    async deleteResourceRating(_, ratingId) {
+      try {
+        await resourceAPI.deleteResourceRating(ratingId)
+      } catch (error) {
+        throw error
+      }
+    },
+
     updateUser({ commit }, user) {
       commit('UPDATE_USER', user)
     },

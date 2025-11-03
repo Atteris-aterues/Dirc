@@ -24,6 +24,7 @@
   transform: translateY(-2px);
 }
 
+/* 已有卡片与按钮等样式 */
 .star-rating .star {
   color: #E5E7EB;
   cursor: pointer;
@@ -31,6 +32,26 @@
 
 .star-rating .star.active {
   color: #FFC107;
+}
+
+/* 新增：字符星星的颜色与交互（点击后的黄色高亮） */
+.star-rating .star-char {
+  color: #E5E7EB;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.star-rating .star-char.active {
+  color: #FFC107;
+}
+
+.star-rating .star-char.inactive {
+  color: #E5E7EB;
+}
+
+.star-rating .star-char:hover {
+  color: #FFD54F;
 }
 
 .btn-primary {
@@ -146,6 +167,7 @@
     transform: translateX(-50%);
   }
 }
+
 
 
 
