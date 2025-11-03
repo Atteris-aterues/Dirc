@@ -69,7 +69,14 @@
 
     <!-- 全部资源列表 -->
     <h2 class="text-xl font-bold mb-4">全部资源</h2>
-    <div class="custom-grid">
+    
+    <!-- 空状态与重试 -->
+    <div v-if="filteredResources.length === 0" class="card p-8 text-center text-gray-600 mb-8">
+      <p class="mb-4">暂无资源数据或加载失败。</p>
+      <button class="btn-primary" @click="onSearchDoc">重试加载</button>
+    </div>
+
+    <div v-else class="custom-grid">
       <div 
         v-for="resource in filteredResources" 
         :key="resource.id"
@@ -181,7 +188,7 @@ export default {
         // searchResources 已返回 data，且 store 内会未变更资源；这里不强制覆盖
         console.log('文档版资源搜索完成', res)
       } catch (e) {
-        console.warn('资源搜索失败：', e)
+        this.$store.commit('SET_ERROR', { title: '加载失败', message: '无法加载资源列表，请稍后重试' })
       }
     },
     async onDownload(resource) {

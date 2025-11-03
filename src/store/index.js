@@ -30,121 +30,14 @@ export default new Vuex.Store({
       }
     },
     
-    // 课程数据
-    courses: [
-      {
-        id: 1,
-        title: '计算机科学导论',
-        instructor: '张教授',
-        college: '计算机学院',
-        rating: 4.2,
-        credits: 3,
-        description: '本课程介绍计算机科学的基本概念，包括算法、数据结构、编程基础等。',
-        image: '/images/courses/computer-science.svg'
-      },
-      {
-        id: 2,
-        title: '数据结构与算法',
-        instructor: '李教授',
-        college: '计算机学院',
-        rating: 4.7,
-        credits: 4,
-        description: '深入学习常用数据结构及其算法实现，掌握算法分析与设计的基本方法。',
-        image: '/images/courses/data-structure.svg'
-      },
-      {
-        id: 3,
-        title: '宏观经济学',
-        instructor: '王教授',
-        college: '经济学院',
-        rating: 3.5,
-        credits: 2,
-        description: '研究国民经济运行的整体结构及其内在规律，包括国民收入、就业、通货膨胀等。',
-        image: '/images/courses/economics.svg'
-      }
-    ],
+    // 课程数据（与后端对接后，初始为空）
+    courses: [],
     
-    // 资源数据
-    resources: [
-      {
-        id: 1,
-        title: '数据结构期末复习重点',
-        course: '数据结构与算法',
-        semester: '2023秋季',
-        author: '李同学',
-        downloads: 326,
-        type: 'pdf',
-        rating: 4.0
-      },
-      {
-        id: 2,
-        title: '算法实验报告参考',
-        course: '数据结构与算法',
-        semester: '实验二',
-        author: '张同学',
-        downloads: 287,
-        type: 'word',
-        rating: 4.5
-      },
-      {
-        id: 3,
-        title: '链表专题讲义',
-        course: '数据结构与算法',
-        semester: '第四章',
-        author: '王同学',
-        downloads: 142,
-        type: 'presentation',
-        rating: 4.2
-      },
-      {
-        id: 4,
-        title: '图算法总结',
-        course: '数据结构与算法',
-        semester: '第五章',
-        author: '刘同学',
-        downloads: 198,
-        type: 'pdf',
-        rating: 4.0
-      },
-      {
-        id: 5,
-        title: '作业数据集',
-        course: '数据结构与算法',
-        semester: '实验三',
-        author: '陈同学',
-        downloads: 156,
-        type: 'excel',
-        rating: 4.8
-      },
-      {
-        id: 6,
-        title: '树结构课件',
-        course: '数据结构与算法',
-        semester: '第六章',
-        author: '赵同学',
-        downloads: 134,
-        type: 'presentation',
-        rating: 3.7
-      }
-    ],
+    // 资源数据（与后端对接后，初始为空）
+    resources: [],
     
-    // 评论数据
-    comments: [
-      {
-        id: 1,
-        author: '张同学',
-        rating: 5,
-        date: '2023-12-12',
-        content: '李教授讲课非常清晰，课程内容很实用，编程作业虽然有一定难度但收获很大。推荐给所有想深入学习算法的同学！'
-      },
-      {
-        id: 2,
-        author: '王同学',
-        rating: 4,
-        date: '2023-12-05',
-        content: '课程内容扎实，需要投入大量时间完成作业和实验。期末考试难度较高，建议提前准备。助教团队很负责，答疑及时。'
-      }
-    ],
+    // 评论数据（与后端对接后，初始为空）
+    comments: [],
     
     // 筛选条件
     filters: {
@@ -175,14 +68,7 @@ export default new Vuex.Store({
       rating: 0,
       comment: ''
     },
-    resourceComments: [
-      { id: 101, author: '张同学', rating: 4, date: '2023-12-12', content: '资料很实用，讲义排版清晰。' },
-      { id: 102, author: '王同学', rating: 5, date: '2023-12-08', content: '包含习题答案，复习很方便！' },
-      { id: 103, author: ' 陈同学 ', rating: 4, date: '2023-12-18', content: ' 例题解析很详细，步骤不跳步，基础弱的也能跟上。' },
-      { id: 104, author: ' 杨同学 ', rating: 5, date: '2023-12-01', content: ' 知识点覆盖得很全，期末复习靠这份资料提了不少分！' },
-      { id: 105, author: ' 赵同学 ', rating: 4, date: '2023-12-15', content: ' 讲解比课本通俗，配合视频课学，难点一下就懂了。' },
-      { id: 106, author: ' 刘同学 ', rating: 5, date: '2023-12-05', content: ' 能直接打印，纸质版复习做笔记超方便，省了自己整理的时间。' }
-    ],
+    resourceComments: [],
     
     // 待审核资源
     pendingResources: [
@@ -554,9 +440,6 @@ async login({ commit }, credentials) {
       }
     },
     
-    initAuth({ commit }) {
-      commit('INIT_AUTH')
-    },
 
     //添加邮箱验证码获取功能
     async getEmailCode({ commit }, email) {
@@ -590,7 +473,7 @@ async login({ commit }, credentials) {
     },
 
     //添加token刷新功能
-    async refreshToken({ commit }) {
+    async refreshToken({ state, commit }) {
       try {
         const response = await authAPI.refreshToken()
         const { token } = response.data
@@ -758,54 +641,15 @@ async login({ commit }, credentials) {
     },
 
     // 课程相关
-    async fetchCourses({ commit, state }, params = {}) {
+    async fetchCourses({ commit }, params = {}) {
       try {
         commit('SET_LOADING', { key: 'courses', value: true })
         const response = await courseAPI.getCourses(params)
         commit('SET_COURSES', response.data)
         return response.data
       } catch (error) {
-        // 网络连接失败时，使用本地模拟数据
-        console.warn('API请求失败，使用本地模拟数据:', error)
-        // 如果state中已有课程数据，使用现有数据
-        if (state.courses && state.courses.length > 0) {
-          return state.courses
-        }
-        // 否则使用默认的模拟课程数据
-        const mockCourses = [
-          {
-            id: 1,
-            title: '计算机科学导论',
-            instructor: '张教授',
-            college: '计算机学院',
-            rating: 4.2,
-            credits: 3,
-            description: '本课程介绍计算机科学的基本概念，包括算法、数据结构、编程基础等。',
-            image: '/images/courses/computer-science.svg'
-          },
-          {
-            id: 2,
-            title: '数据结构与算法',
-            instructor: '李教授',
-            college: '计算机学院',
-            rating: 4.7,
-            credits: 4,
-            description: '深入学习常用数据结构及其算法实现，掌握算法分析与设计的基本方法。',
-            image: '/images/courses/data-structure.svg'
-          },
-          {
-            id: 3,
-            title: '宏观经济学',
-            instructor: '王教授',
-            college: '经济学院',
-            rating: 3.5,
-            credits: 2,
-            description: '研究国民经济运行的整体结构及其内在规律，包括国民收入、就业、通货膨胀等。',
-            image: '/images/courses/economics.svg'
-          }
-        ]
-        commit('SET_COURSES', mockCourses)
-        return mockCourses
+        // 上抛错误，交由上层统一处理
+        throw error
       } finally {
         commit('SET_LOADING', { key: 'courses', value: false })
       }

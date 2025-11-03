@@ -50,8 +50,14 @@
         </div>
       </div>
 
+      <!-- 空状态与重试 -->
+      <div v-if="filteredCourses.length === 0" class="card p-8 text-center text-gray-600 mb-8">
+        <p class="mb-4">暂无课程数据或加载失败。</p>
+        <button class="btn-primary" @click="loadCoursesDoc">重试加载</button>
+      </div>
+
       <!-- 课程列表 -->
-      <div class="custom-grid">
+      <div v-else class="custom-grid">
         <CourseCard 
           v-for="course in filteredCourses" 
           :key="course.id"
@@ -362,8 +368,7 @@ export default {
         }))
         this.$store.commit('SET_COURSES', mapped)
       } catch (e) {
-        // 保持现有本地兜底数据
-        console.warn('按文档版获取课程失败，保留现有数据：', e)
+        this.$store.commit('SET_ERROR', { title: '加载失败', message: '无法加载课程列表，请稍后重试' })
       }
     },
     async onFilterChange(key, value) {
