@@ -66,12 +66,14 @@ export default {
   },
   // 全局方法，可以在任何组件中通过 this.$root.$emit('message', text, type) 调用
   mounted() {
-    this.$on('message', (text, type) => {
+    // 在根实例上监听全局消息事件
+    this.$root.$on('message', (text, type) => {
       this.showMessage(text, type)
     })
   },
   beforeDestroy() {
-    this.$off('message')
+    // 组件销毁时取消根实例的监听
+    this.$root.$off('message')
   }
 }
 </script>

@@ -35,7 +35,14 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('API错误:', error); // 添加日志以便调试
+    const ctx = {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      responseData: error.response?.data,
+      message: error.message
+    }
+    console.error('API错误详细:', ctx)
     
     // 处理认证错误
     if (error.response?.status === 401) {

@@ -206,25 +206,37 @@
             :key="comment.id"
             class="comment-item"
           >
-            <div class="flex items-center mb-2">
-              <div class="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10 mr-3"></div>
-              <div>
-                <h4 class="font-bold">{{ comment.author }}</h4>
-                <div class="flex items-center">
-                  <div class="star-rating flex mr-2">
-                    <span 
-                      v-for="star in 5" 
-                      :key="star"
-                      class="iconify star"
-                      :class="{ active: star <= comment.rating }"
-                      data-icon="mdi:star"
-                    ></span>
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex items-center">
+                <div class="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10 mr-3"></div>
+                <div>
+                  <h4 class="font-bold">{{ comment.author }}</h4>
+                  <div class="flex items-center">
+                    <div class="star-rating flex mr-2">
+                      <span 
+                        v-for="star in 5" 
+                        :key="star"
+                        class="iconify star"
+                        :class="{ active: star <= comment.rating }"
+                        data-icon="mdi:star"
+                      ></span>
+                    </div>
+                    <span class="text-gray-500 text-sm">{{ comment.date }}</span>
                   </div>
-                  <span class="text-gray-500 text-sm">{{ comment.date }}</span>
                 </div>
               </div>
+              <!-- 点赞按钮（右侧） -->
+              <button
+                class="inline-flex items-center space-x-1 px-2 py-1 rounded hover:bg-blue-50 transition transform active:scale-95"
+                :class="comment.liked ? 'text-blue-600' : 'text-gray-600'"
+                @click="toggleCourseCommentLike(comment)"
+                :aria-label="comment.liked ? '取消点赞' : '点赞'"
+              >
+                <span class="iconify" :data-icon="comment.liked ? 'mdi:thumb-up' : 'mdi:thumb-up-outline'"></span>
+                <span>{{ comment.likes || 0 }}</span>
+              </button>
             </div>
-            <p class="text-gray-700">{{ comment.content }}</p>
+          <p class="text-gray-700">{{ comment.content }}</p>
           </div>
         </div>
       </div>
@@ -344,13 +356,23 @@ export default {
         comment: this.userRating.comment 
       })
     },
-    submitRating() {
+    async submitRating() {
       if (this.userRating.rating > 0 && this.userRating.comment.trim()) {
-        this.$store.dispatch('submitRating', {
-          rating: this.userRating.rating,
-          comment: this.userRating.comment
-        })
-        alert('评价提交成功！')
+        try {
+          await this.$store.dispatch('submitRating', {
+            rating: this.userRating.rating,
+            comment: this.userRating.comment
+          })
+          alert('评价提交成功！')
+        } catch (error) {
+          console.error('提交课程评价失败:', {
+            status: error?.response?.status,
+            data: error?.response?.data,
+            url: error?.config?.url
+          })
+          const msg = error?.response?.data?.message || error?.message || '提交失败，后端报错(500)'
+          alert(msg)
+        }
       } else {
         alert('请选择评分并填写评论')
       }
@@ -428,6 +450,27 @@ export default {
     handleTeacherAvatarError(event) {
       // 教师头像加载失败时显示占位符
       event.target.src = '/images/avatars/teacher.svg'
+    },
+    async toggleCourseCommentLike(comment) {
+      if (!this.$store.getters.isAuthenticated) {
+        this.$root?.$emit?.('message', '请先登录后再点赞', 'error')
+        return
+      }
+      const id = comment.id
+      try {
+        if (comment.liked) {
+          await this.$store.dispatch('unlikeCourseComment', id)
+          this.$root?.$emit?.('message', '已取消点赞', 'success')
+        } else {
+          await this.$store.dispatch('likeCourseComment', id)
+          this.$root?.$emit?.('message', '已点赞', 'success')
+        }
+      } catch (error) {
+        const status = error?.response?.status
+        const msg = error?.response?.data?.message || error?.message || '操作失败'
+        console.error('课程评论点赞操作失败:', { id, likedBefore: comment.liked, status, msg })
+        this.$root?.$emit?.('message', msg, 'error')
+      }
     }
   },
   async created() {

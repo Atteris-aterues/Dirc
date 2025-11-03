@@ -334,6 +334,30 @@ export default new Vuex.Store({
     REMOVE_COMMENT(state, commentId) {
       state.comments = state.comments.filter(c => c.id !== commentId)
     },
+    LIKE_COMMENT(state, commentId) {
+      const c = (state.comments || []).find(i => i.id === commentId)
+      if (!c) return
+      c.likes = Number(c.likes || 0) + 1
+      c.liked = true
+    },
+    UNLIKE_COMMENT(state, commentId) {
+      const c = (state.comments || []).find(i => i.id === commentId)
+      if (!c) return
+      c.likes = Math.max(Number(c.likes || 0) - 1, 0)
+      c.liked = false
+    },
+    LIKE_RESOURCE_COMMENT(state, commentId) {
+      const c = (state.resourceComments || []).find(i => i.id === commentId)
+      if (!c) return
+      c.likes = Number(c.likes || 0) + 1
+      c.liked = true
+    },
+    UNLIKE_RESOURCE_COMMENT(state, commentId) {
+      const c = (state.resourceComments || []).find(i => i.id === commentId)
+      if (!c) return
+      c.likes = Math.max(Number(c.likes || 0) - 1, 0)
+      c.liked = false
+    },
     
     UPDATE_USER(state, user) {
       const index = state.users.findIndex(u => u.id === user.id)
@@ -676,6 +700,44 @@ async login({ commit }, credentials) {
       }
     },
 
+    async likeCourseComment({ commit, getters }, commentId) {
+      if (!getters.isAuthenticated) {
+        const err = new Error('请先登录后再点赞')
+        commit('SET_ERROR', err.message)
+        throw err
+      }
+      commit('LIKE_COMMENT', commentId)
+      try {
+        await courseAPI.likeCourseComment(commentId)
+      } catch (error) {
+        const status = error?.response?.status
+        if (status !== 404 && status !== 405) {
+          commit('UNLIKE_COMMENT', commentId)
+        }
+        commit('SET_ERROR', error?.message || '课程评论点赞失败')
+        throw error
+      }
+    },
+
+    async unlikeCourseComment({ commit, getters }, commentId) {
+      if (!getters.isAuthenticated) {
+        const err = new Error('请先登录后再操作')
+        commit('SET_ERROR', err.message)
+        throw err
+      }
+      commit('UNLIKE_COMMENT', commentId)
+      try {
+        await courseAPI.unlikeCourseComment(commentId)
+      } catch (error) {
+        const status = error?.response?.status
+        if (status !== 404 && status !== 405) {
+          commit('LIKE_COMMENT', commentId)
+        }
+        commit('SET_ERROR', error?.message || '课程评论取消点赞失败')
+        throw error
+      }
+    },
+
     // 课程：删除评分（通常不需要更新本地列表）
     async deleteCourseRating(_, ratingId) {
       try {
@@ -740,6 +802,44 @@ async login({ commit }, credentials) {
         commit('REMOVE_RESOURCE_COMMENT', commentId)
       } catch (error) {
         commit('SET_ERROR', error?.message || '删除资源评论失败')
+        throw error
+      }
+    },
+
+    async likeResourceComment({ commit, getters }, commentId) {
+      if (!getters.isAuthenticated) {
+        const err = new Error('请先登录后再点赞')
+        commit('SET_ERROR', err.message)
+        throw err
+      }
+      commit('LIKE_RESOURCE_COMMENT', commentId)
+      try {
+        await resourceAPI.likeResourceComment(commentId)
+      } catch (error) {
+        const status = error?.response?.status
+        if (status !== 404 && status !== 405) {
+          commit('UNLIKE_RESOURCE_COMMENT', commentId)
+        }
+        commit('SET_ERROR', error?.message || '资源评论点赞失败')
+        throw error
+      }
+    },
+
+    async unlikeResourceComment({ commit, getters }, commentId) {
+      if (!getters.isAuthenticated) {
+        const err = new Error('请先登录后再操作')
+        commit('SET_ERROR', err.message)
+        throw err
+      }
+      commit('UNLIKE_RESOURCE_COMMENT', commentId)
+      try {
+        await resourceAPI.unlikeResourceComment(commentId)
+      } catch (error) {
+        const status = error?.response?.status
+        if (status !== 404 && status !== 405) {
+          commit('LIKE_RESOURCE_COMMENT', commentId)
+        }
+        commit('SET_ERROR', error?.message || '资源评论取消点赞失败')
         throw error
       }
     },

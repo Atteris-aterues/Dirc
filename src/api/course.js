@@ -33,10 +33,18 @@ export const courseAPI = {
   getCourseComments(courseId, params = {}, config = {}) {
     const cfg = { params, ...(config || {}) }
     return api.get(`/courses/${courseId}/comments`, cfg).catch((err) => {
-      // 若后端未实现 comments 路径，尝试回退到 reviews
       const status = err?.response?.status
       if (status === 404 || status === 405) {
-        return api.get(`/courses/${courseId}/reviews`, cfg)
+        console.warn('[getCourseComments] /courses/:id/comments 未实现，尝试 /course_comments?courseId=:id', { courseId })
+        const cfg2 = { params: { courseId, ...(params || {}) }, ...(config || {}) }
+        return api.get('/course_comments', cfg2).catch((err2) => {
+          const s2 = err2?.response?.status
+          if (s2 === 404 || s2 === 405) {
+            console.warn('[getCourseComments] /course_comments 未实现，尝试 /courses/:id/reviews', { courseId })
+            return api.get(`/courses/${courseId}/reviews`, cfg)
+          }
+          return Promise.reject(err2)
+        })
       }
       return Promise.reject(err)
     })
@@ -68,8 +76,12 @@ export const courseAPI = {
   },
 
   // 提交课程评分（兼容后端 /course_ratings/ 路径）
-  
-
+  likeCourseComment(commentId, config = {}) {
+    return api.post(`/course_comments/${commentId}/like`, null, config)
+  },
+  unlikeCourseComment(commentId, config = {}) {
+    return api.delete(`/course_comments/${commentId}/like`, config)
+  },
   submitCourseRating(ratingData, config = {}) {
     const cfg = { ...(config || {}) }
     // Node form-data 有 getHeaders()，将其 headers 合并

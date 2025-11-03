@@ -52,7 +52,23 @@ export const resourceAPI = {
     return api.get(`/resources/${resourceId}/comments`, cfg).catch((err) => {
       const status = err?.response?.status
       if (status === 404 || status === 405) {
-        return api.get(`/resources/${resourceId}/reviews`, cfg)
+        console.warn('[getResourceComments] /resources/:id/comments 未实现，尝试 /resource_comments?resourceId=:id', { resourceId })
+        const cfg2 = { params: { resourceId, ...(params || {}) }, ...(config || {}) }
+        return api.get('/resource_comments', cfg2).catch((err2) => {
+          const s2 = err2?.response?.status
+          if (s2 === 404 || s2 === 405) {
+            console.warn('[getResourceComments] /resource_comments 未实现，尝试 /resources_comments?resourceId=:id', { resourceId })
+            return api.get('/resources_comments', cfg2).catch((err3) => {
+              const s3 = err3?.response?.status
+              if (s3 === 404 || s3 === 405) {
+                console.warn('[getResourceComments] 所有评论路径未实现，尝试 /resources/:id/reviews', { resourceId })
+                return api.get(`/resources/${resourceId}/reviews`, cfg)
+              }
+              return Promise.reject(err3)
+            })
+          }
+          return Promise.reject(err2)
+        })
       }
       return Promise.reject(err)
     })
@@ -119,7 +135,12 @@ export const resourceAPI = {
       return Promise.reject(err)
     })
   },
-
+  likeResourceComment(commentId, config = {}) {
+    return api.post(`/resource_comments/${commentId}/like`, null, config)
+  },
+  unlikeResourceComment(commentId, config = {}) {
+    return api.delete(`/resource_comments/${commentId}/like`, config)
+  },
   // 获取我的资源
   getMyResources() {
     return api.get('/resources/my-resources')
