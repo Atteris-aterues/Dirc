@@ -740,6 +740,30 @@ async login({ commit }, credentials) {
         const defaultPaging = { page_size: 10, page_num: 1 }
         const mergedFilters = { ...defaultPaging, ...(filters || {}) }
         const response = await resourceAPI.searchResources(keyword, mergedFilters)
+        
+        // 后端返回格式: { baseResp, resources, total }
+        // 需要将后端字段映射到前端期望的字段
+        const resources = (response.data?.resources || []).map(resource => ({
+          id: resource.resourceId,
+          title: resource.title,
+          description: resource.description,
+          type: resource.fileType,
+          filePath: resource.filePath,
+          fileSize: resource.fileSize,
+          courseId: resource.courseId,
+          course: resource.course || '', // 如果后端没有直接返回课程名，需要从课程ID获取
+          semester: resource.semester || '',
+          author: resource.author || '', // 如果后端没有直接返回作者名，需要从uploaderId获取
+          authorId: resource.uploaderId,
+          downloads: resource.downloadCount,
+          rating: resource.averageRating,
+          ratingCount: resource.ratingCount,
+          status: resource.status,
+          createdAt: resource.createdAt,
+          tags: resource.tags || []
+        }))
+        
+        commit('SET_RESOURCES', resources)
         return response.data
       } catch (error) {
         throw error
